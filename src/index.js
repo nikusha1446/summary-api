@@ -1,4 +1,5 @@
 import express from 'express';
+import connectDb from './config/db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,16 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDb();
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
