@@ -81,3 +81,23 @@ export const login = async (req, res) => {
     });
   }
 };
+
+export const getMe = async (req, res) => {
+  try {
+    const user = {
+      id: req.user._id,
+      email: req.user.email,
+      name: req.user.name,
+      createdAt: req.user.createdAt,
+    };
+
+    res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+    });
+  }
+};
