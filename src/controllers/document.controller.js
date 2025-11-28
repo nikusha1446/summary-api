@@ -29,3 +29,42 @@ export const createDocument = async (req, res) => {
     });
   }
 };
+
+export const getAllDocuments = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const documents = await Document.find({ userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalDocuments = await Document.countDocuments({ userId });
+    const totalPages = Math.ceil(totalDocuments / limit);
+
+    res.status(200).json({
+      documents: documents.map((doc) => ({
+        id: doc._id,
+        title: doc.title,
+        content: doc.content,
+        userId: doc.userId,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      })),
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalDocuments,
+        limit,
+      },
+    });
+  } catch (error) {
+    console.error('Get all documents error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+    });
+  }
+};
