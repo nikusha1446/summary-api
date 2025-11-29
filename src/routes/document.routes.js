@@ -5,11 +5,13 @@ import { createDocumentSchema } from '../validators/document.validator.js';
 import {
   createDocument,
   getAllDocuments,
+  getDocumentById,
 } from '../controllers/document.controller.js';
 
 const router = express.Router();
 
 router.post('/', authenticate, validate(createDocumentSchema), createDocument);
 router.get('/', authenticate, getAllDocuments);
+router.get('/:id', authenticate, getDocumentById);
 
 export default router;
