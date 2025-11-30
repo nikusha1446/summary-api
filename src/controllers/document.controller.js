@@ -1,4 +1,5 @@
 import Document from '../models/document.model.js';
+import Summary from '../models/summary.model.js';
 
 export const createDocument = async (req, res) => {
   try {
@@ -101,6 +102,47 @@ export const getDocumentById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get document by ID error:', error);
+
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        error: 'Invalid document ID format',
+      });
+    }
+
+    res.status(500).json({
+      error: 'Internal server error',
+    });
+  }
+};
+
+export const deleteDocument = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id } = req.params;
+
+    const document = await Document.findById(id);
+
+    if (!document) {
+      return res.status(404).json({
+        error: 'Document not found',
+      });
+    }
+
+    if (document.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        error:
+          'Access denied. You do not have permission to delete this document',
+      });
+    }
+
+    await Summary.deleteMany({ documentId: id });
+    await Document.findByIdAndDelete(id);
+
+    res.status(200).json({
+      message: 'Document and associated summaries deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete document error:', error);
 
     if (error.name === 'CastError') {
       return res.status(400).json({
