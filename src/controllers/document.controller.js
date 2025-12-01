@@ -155,3 +155,69 @@ export const deleteDocument = async (req, res) => {
     });
   }
 };
+
+export const updateDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+    const { title, content } = req.body;
+
+    const document = await Document.findById(id);
+
+    if (!document) {
+      return res.status(404).json({
+        error: 'Document not found',
+      });
+    }
+
+    if (document.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        error:
+          'Access denied. You do not have permission to update this document',
+      });
+    }
+
+    let contentChanged = false;
+
+    if (content && content !== document.content) {
+      await Summary.deleteMany({ documentId: id });
+      contentChanged = true;
+    }
+
+    if (title !== undefined) {
+      document.title = title;
+    }
+
+    if (content !== undefined) {
+      document.content = content;
+    }
+
+    await document.save();
+
+    res.status(200).json({
+      message: contentChanged
+        ? 'Document updated successfully. All summaries have been deleted due to content change.'
+        : 'Document updated successfully',
+      document: {
+        id: document._id,
+        title: document.title,
+        content: document.content,
+        userId: document.userId,
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error('Update document error:', error);
+
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        error: 'Invalid document ID format',
+      });
+    }
+
+    res.status(500).json({
+      error: 'Internal server error',
+    });
+  }
+};
